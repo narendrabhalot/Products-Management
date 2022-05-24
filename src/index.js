@@ -15,7 +15,7 @@ app.use(multer().any());
 
 mongoose
   .connect(
-    "mongodb+srv://Group12:ePEkzwTEvjnPK9PW@cluster0.a4dyz.mongodb.net/?retryWrites=true&w=majority",
+    "mongodb+srv://Group12:ePEkzwTEvjnPK9PW@cluster0.a4dyz.mongodb.net/group12Database",
     {
       useNewUrlParser: true,
     }
