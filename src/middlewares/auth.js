@@ -1,6 +1,6 @@
 const authentication = async function (req, res) {
   try {
-    let token = req.headers.authorization.slice(7);
+    let token = req.headers.authorization.split(" ")[1];
 
     // if no token found
     if (!token) {
