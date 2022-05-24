@@ -42,7 +42,8 @@ if(!isUserExist){
 if(userId != req.userId){
     return res.status(403).send({status:false , msg:"you are  not  authorized for update the user document"})
 }
-// const {fname ,lname , email,phone,password,address, } = requestBody
+// const {fname ,lname , email,phone,password,address} = requestBody
+
 
 // const updateBookData = {}
 
@@ -89,6 +90,13 @@ if(userId != req.userId){
 //         updateBookData['$set'] = {}
 //     updateBookData['$set']['password'] = password
 // }
+
+
+
+
+
+
+
 
 
 
