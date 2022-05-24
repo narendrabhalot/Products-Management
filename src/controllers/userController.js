@@ -233,12 +233,22 @@ const createUser = async function(req, res) {
     } 
   
 
-      const data1 =  { fname, lname, email, phone, address }
-       data1.profileImage = data.profileImage
-       data1.password = hashPass
+      // const data1 =  { fname, lname, email, phone, address }
+      // data1.profileImage = data.profileImage
+      // data1.password = hashPass
+      let finalData = {
+        fname,
+        lname,
+        email,
+        profileImage: data.profileImage,
+        phone,
+        password: hashPass,
+        address
+      }
+       
      
       // Finally Create The User Details After Validation
-      let userData = await userModel.create(data1)
+      let userData = await userModel.create(finalData)
       res.status(201).send({ status:true, message: 'Success', data: userData })
 
   } catch (error) {
