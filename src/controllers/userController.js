@@ -259,7 +259,7 @@ const createUser = async function(req, res) {
 //=========================================== Fetch Profile =======================================
 
 const getProfile = async function (req, res) {
-  try {
+  // try {
     let userId = req.params.userId;
 
     // if userId is not a valid ObjectId
@@ -271,8 +271,8 @@ const getProfile = async function (req, res) {
     }
 
     // if user does not exist
-    let userDoc = await userModel.findbyId(userId);
-    if (!userDoc.length) {
+    let userDoc = await userModel.findById(userId);
+    if (!userDoc) {
       return res.status(400).send({
         status: false,
         message: "user does not exist",
@@ -280,26 +280,130 @@ const getProfile = async function (req, res) {
     }
 
     //📌 AUTHORISATION:
-    if (req.userId !== userId) {
-      return res.status(400).send({
-        status: false,
-        message: `Authorisation failed; You are logged in as ${req.userId}, not as ${userId}`,
-      });
-    }
+    // if (req.userId !== userId) {
+    //   return res.status(400).send({
+    //     status: false,
+    //     message: `Authorisation failed; You are logged in as ${req.userId}, not as ${userId}`,
+    //   });
+    // }
     res.status(200).send({
       status: true,
       message: "Sucess",
       data: userDoc,
     });
-  } catch (err) {
-    res.status(400).send({
-      status: false,
-      message: "Internal Server Error",
-      error: err.message,
-    });
+  // } catch (err) {
+  //   res.status(400).send({
+  //     status: false,
+  //     message: "Internal Server Error",
+  //     error: err.message,
+    // });
   }
-};
+// };
 
 //------------------------------------------------------------------------------------------------------------------------------------------------------
 
-module.exports = { createUser, getProfile };
+const userUpdate = async function(req,res){
+
+  const userId = req.params.userId
+  let requestBody = req.body 
+  let files = req.files
+  if(!validator.isValidObjectId(userId)) {
+      res.status(400).send({status: false, message: `${userId} is not a valid author id`})
+      return
+  }
+
+  if(!validator.isValidRequestBody(requestBody)) {
+      res.status(400).send({status: false, message: 'Invalid request parameters. Please provide updating keys  details'})
+      return
+  }
+
+
+let isUserExist = await userModel.findById(userId)
+if(!isUserExist){
+  return res.status(404).send({status:false ,msg : "user does not exist"})
+}
+
+  
+
+// if(userId != req.userId){
+//   return res.status(403).send({status:false , msg:"you are  not  authorized for update the user document"})
+// }
+let {fname ,lname , email,phone,password,} = requestBody
+
+
+const updateBookData = {}
+
+if(validator.isValid(fname)){
+    if (!Object.prototype.hasOwnProperty.call(updateBookData, `$set`))
+        updateBookData['$set'] = {}
+    updateBookData['$set']['fname'] = fname
+}
+
+if (validator.isValid(lname)) {
+    if (!Object.prototype.hasOwnProperty.call(updateBookData, `$set`))
+        updateBookData['$set'] = {}
+    updateBookData['$set']['lname'] = lname
+}
+if (validator.isValid(email)) {
+    let  isISBNAlreadyUsed = await userModel.findOne({ email, _id:  userId  })
+    if (isISBNAlreadyUsed)
+        return res.status(400).send({ status: false, msg: `${email} email  already exist` })
+
+    if (!Object.prototype.hasOwnProperty.call(updateBookData, `$set`))
+        updateBookData['$set'] = {}
+    updateBookData['$set']['email'] = email
+} 
+if (validator.isValid(files)) {
+    if (!Object.prototype.hasOwnProperty.call(updateBookData, `$set`))
+        updateBookData['$set'] = {}
+    updateBookData['$set']['lname'] = lname
+}
+if (validator.isValid(phone)) {
+    const isPhoneAlreadyUsed = await userModel.findOne({ phone, _id: { $ne: userId } })
+    if (isPhoneAlreadyUsed)
+        return res.status(400).send({ status: false, msg: `${phone} ISBN  already exist` })
+
+    if (!Object.prototype.hasOwnProperty.call(updateBookData, `$set`))
+        updateBookData['$set'] = {}
+    updateBookData['$set']['phone'] = phone
+}
+if (validator.isValid(password)) {
+   
+
+    if (!Object.prototype.hasOwnProperty.call(updateBookData, `$set`))
+        updateBookData['$set'] = {}
+    updateBookData['$set']['password'] = password
+}
+
+// if(files && files.length > 0 ) {
+//   if (! validator.isValidImage(files[0].originalname)) {
+//       return res.status(400).send({ status : false , message:"File extension not supported!" });
+//   } 
+//   let uploadedFileURL = await uploadFile(files[0])
+//   updateBookData.profileImage = uploadedFileURL
+//   //res.status(201).send({msg: 'file uploaded succesfully', data: uploadedFileURL})
+// }
+
+
+
+
+
+
+
+
+
+if(updateBookData==={}){
+  return res.status(200).send({status:true ,message:"user  not profile updated"  })
+}
+
+
+let updateuser = await userModel.findOneAndUpdate({_id:userId},updateBookData,{new:true})
+
+
+return res.status(200).send({status:true ,message:"user profile updated" , data:updateuser })
+
+
+
+
+}
+module.exports = { createUser, getProfile,userUpdate };
