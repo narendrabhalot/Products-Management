@@ -442,7 +442,7 @@ const getProfile = async function (req, res) {
 const updateUser = async function (req, res) {
   try {
     const userId = req.params.userId;
-    let requestBody = { ...req.body }; // req.body does not have a prototype; creating a new object (by default associates a prototype object)
+    let requestBody = { ...req.body }; // req.body does not have a prototype; creating a new object (prototype object associates by default)
     let files = req.files;
 
     // if userId is not a valid ObjectId
@@ -561,7 +561,10 @@ const updateUser = async function (req, res) {
     let Doc = await userModel.findOne({ _id: userId });
     updateUserData.address = Doc.address; // storing previous address in updateUserData
 
-    address = JSON.parse(address); // new address manipulated to access values using dot notation
+    // JSON.parse(undefined/emptyString) throws "Internal Server Error"
+    if (isValid(address)) {
+      address = JSON.parse(address); // new address (if sent through req.body) manipulated to access values using dot notation
+    }
 
     // adding new shipping details
     if (address?.shipping) {
