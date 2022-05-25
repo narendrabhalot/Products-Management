@@ -12,7 +12,7 @@ const {
 router.post("/register", createUser);
 router.post("/login", loginUser);
 router.get("/user/:userId/profile", authentication, getProfile);
-router.put("//user/:userId/profile", updateUser);
+router.put("/user/:userId/profile", authentication, updateUser);
 
 router.all("/*", function (req, res) {
   res

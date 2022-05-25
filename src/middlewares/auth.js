@@ -2,7 +2,7 @@ const jwt = require("jsonwebtoken");
 
 const authentication = async function (req, res, next) {
   try {
-    let token = req.headers.authorization.split(" ")[1];
+    let token = req.headers.authorization;
 
     // if no token found
     if (!token) {
@@ -11,6 +11,9 @@ const authentication = async function (req, res, next) {
         message: "Token required! Please login to generate token",
       });
     }
+
+    // This👇 is written here to avoid internal server error (if token is not present)
+    token = token.split(" ")[1];
 
     jwt.verify(
       token,
