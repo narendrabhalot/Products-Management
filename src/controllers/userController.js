@@ -3,7 +3,8 @@ const { isValidObjectId } = require("mongoose");
 const bcrypt = require("bcrypt");
 const aws = require("aws-sdk")
 const { uploadFile } = require('./awsUpload')
-const validator = require('../validators/validator')
+const validator = require('../validators/validator');
+const { authorisation } = require("../middlewares/auth");
 
 
 // ========================================= create User profile =======================================
@@ -249,17 +250,93 @@ const createUser = async function(req, res) {
      
       // Finally Create The User Details After Validation
       let userData = await userModel.create(finalData)
-      res.status(201).send({ status:true, message: 'Success', data: userData })
+      res.status(201).send({ status:true, message: 'User created successfully', data: userData })
 
   } catch (error) {
       res.status(500).send({status:false , msg: error.message});
   }
 }
 
+//============================================Login user=================================
+
+const loginUser = async (req, res) => {
+
+  try{
+  
+       // Extract data from RequestBody
+       let data = req.body
+      
+        // first Check request body is coming or not 
+       if(!validator.isValidRequestBody(data)) {
+          res.status(400).send({status: false , Message: 'Invalid request parameters. Please provide User details'})
+          return
+      }
+  
+      // Extract Email And Password
+      const { email , password } = data
+  
+      // Check Email is Coming Or not 
+      if(!validator.isValid(email)) {
+          res.status(400).send({status: false , message: 'Email is required'})
+          return
+      }
+      
+       // Validate Email
+      if(!validator.isValidEmail(email)) {
+          res.status(400).send({status: false , message: 'Email is invalid'})
+          return
+      }
+  
+      // Check password is Coming Or not 
+      if(!validator.isValid(password)) {
+          res.status(400).send({status: false , message: 'password is required'})
+          return
+      }
+
+       // Validate password
+      if(!validator.isValidPassword(password)){
+          res.status(400).send({status: false , message:'It is not valid password'})
+          return
+      }
+
+     
+      
+          // Check Email and password is Present in DB  
+      let user = await userModel.findOne({email: email })
+           
+      if(!user || ! await bcrypt.compare(password, user.password)){
+            return  res.status(401).send({status:false,msg:"Email or password does not match, Invalid login Credentials"})
+      }
+         //  const hashPass = await validator.hashPassword(password)
+  
+          // Generate Token 
+      let token = jwt.sign(
+        {
+          userId: user._id.toString(),
+          iat: Math.floor(Date.now() / 1000),
+          exp: Math.floor(Date.now() / 1000)+ 10*60*60
+        },
+        "functionUp-Uranium" 
+      )
+  
+      // Send the token to Response Header
+      res.header.authorization("Bearer" , token)
+      
+  
+      // send response to  user that Author is successfully logged in
+      res.status(200).send({status:true , message:"User login successfull" , data: {userId: _id ,token: token } })
+       
+  }
+  catch(error){
+      res.status(500).send({ status:false , msg:error.message});
+  }
+  
+  }
+
 //=========================================== Fetch Profile =======================================
 
 const getProfile = async function (req, res) {
-  // try {
+  try {
     let userId = req.params.userId;
 
     // if userId is not a valid ObjectId
@@ -271,7 +348,7 @@ const getProfile = async function (req, res) {
     }
 
     // if user does not exist
-    let userDoc = await userModel.findById(userId);
+    let userDoc = await userModel.findbyId(userId);
     if (!userDoc) {
       return res.status(400).send({
         status: false,
@@ -280,130 +357,26 @@ const getProfile = async function (req, res) {
     }
 
     //📌 AUTHORISATION:
-    // if (req.userId !== userId) {
-    //   return res.status(400).send({
-    //     status: false,
-    //     message: `Authorisation failed; You are logged in as ${req.userId}, not as ${userId}`,
-    //   });
-    // }
+    if (req.userId !== userId) {
+      return res.status(400).send({
+        status: false,
+        message: `Authorisation failed; You are logged in as ${req.userId}, not as ${userId}`,
+      });
+    }
     res.status(200).send({
       status: true,
       message: "Sucess",
       data: userDoc,
     });
-  // } catch (err) {
-  //   res.status(400).send({
-  //     status: false,
-  //     message: "Internal Server Error",
-  //     error: err.message,
-    // });
+  } catch (err) {
+    res.status(400).send({
+      status: false,
+      message: "Internal Server Error",
+      error: err.message,
+    });
   }
-// };
+};
 
 //------------------------------------------------------------------------------------------------------------------------------------------------------
 
-const userUpdate = async function(req,res){
-
-  const userId = req.params.userId
-  let requestBody = req.body 
-  let files = req.files
-  if(!validator.isValidObjectId(userId)) {
-      res.status(400).send({status: false, message: `${userId} is not a valid author id`})
-      return
-  }
-
-  if(!validator.isValidRequestBody(requestBody)) {
-      res.status(400).send({status: false, message: 'Invalid request parameters. Please provide updating keys  details'})
-      return
-  }
-
-
-let isUserExist = await userModel.findById(userId)
-if(!isUserExist){
-  return res.status(404).send({status:false ,msg : "user does not exist"})
-}
-
-  
-
-// if(userId != req.userId){
-//   return res.status(403).send({status:false , msg:"you are  not  authorized for update the user document"})
-// }
-let {fname ,lname , email,phone,password,} = requestBody
-
-
-const updateBookData = {}
-
-if(validator.isValid(fname)){
-    if (!Object.prototype.hasOwnProperty.call(updateBookData, `$set`))
-        updateBookData['$set'] = {}
-    updateBookData['$set']['fname'] = fname
-}
-
-if (validator.isValid(lname)) {
-    if (!Object.prototype.hasOwnProperty.call(updateBookData, `$set`))
-        updateBookData['$set'] = {}
-    updateBookData['$set']['lname'] = lname
-}
-if (validator.isValid(email)) {
-    let  isISBNAlreadyUsed = await userModel.findOne({ email, _id:  userId  })
-    if (isISBNAlreadyUsed)
-        return res.status(400).send({ status: false, msg: `${email} email  already exist` })
-
-    if (!Object.prototype.hasOwnProperty.call(updateBookData, `$set`))
-        updateBookData['$set'] = {}
-    updateBookData['$set']['email'] = email
-} 
-if (validator.isValid(files)) {
-    if (!Object.prototype.hasOwnProperty.call(updateBookData, `$set`))
-        updateBookData['$set'] = {}
-    updateBookData['$set']['lname'] = lname
-}
-if (validator.isValid(phone)) {
-    const isPhoneAlreadyUsed = await userModel.findOne({ phone, _id: { $ne: userId } })
-    if (isPhoneAlreadyUsed)
-        return res.status(400).send({ status: false, msg: `${phone} ISBN  already exist` })
-
-    if (!Object.prototype.hasOwnProperty.call(updateBookData, `$set`))
-        updateBookData['$set'] = {}
-    updateBookData['$set']['phone'] = phone
-}
-if (validator.isValid(password)) {
-   
-
-    if (!Object.prototype.hasOwnProperty.call(updateBookData, `$set`))
-        updateBookData['$set'] = {}
-    updateBookData['$set']['password'] = password
-}
-
-// if(files && files.length > 0 ) {
-//   if (! validator.isValidImage(files[0].originalname)) {
-//       return res.status(400).send({ status : false , message:"File extension not supported!" });
-//   } 
-//   let uploadedFileURL = await uploadFile(files[0])
-//   updateBookData.profileImage = uploadedFileURL
-//   //res.status(201).send({msg: 'file uploaded succesfully', data: uploadedFileURL})
-// }
-
-
-
-
-
-
-
-
-
-if(updateBookData==={}){
-  return res.status(200).send({status:true ,message:"user  not profile updated"  })
-}
-
-
-let updateuser = await userModel.findOneAndUpdate({_id:userId},updateBookData,{new:true})
-
-
-return res.status(200).send({status:true ,message:"user profile updated" , data:updateuser })
-
-
-
-
-}
-module.exports = { createUser, getProfile,userUpdate };
+module.exports = { createUser, getProfile, loginUser };

@@ -1,4 +1,4 @@
-const authentication = async function (req, res) {
+const authentication = async function (req, res, next) {
   try {
     let token = req.headers.authorization.split(" ")[1];
 
