@@ -1,11 +1,18 @@
 const express = require("express");
 const router = express.Router();
-const { authentication, authorisation } = require("../middlewares/auth");
-const {createUser, getProfile } = require("../controllers/userController");
+const { authentication } = require("../middlewares/auth");
+const {
+  createUser,
+  loginUser,
+  getProfile,
+  updateUser,
+} = require("../controllers/userController");
 
 // user APIs
 router.post("/register", createUser);
+router.post("/login", loginUser);
 router.get("/user/:userId/profile", authentication, getProfile);
+router.put("//user/:userId/profile", updateUser);
 
 router.all("/*", function (req, res) {
   res
