@@ -60,6 +60,38 @@ const hashPassword = async (password) => {
  // console.log(await bcrypt.compare(password, hash))
 }
 
+const isSize = function(title) {
+  //console.log(['Mr','Mrs','Miss'].includes(title));
+  return ["S", "XS","M","X", "L","XXL", "XL"].includes(title.toUpperCase())
+}
+
+const isValidPrice = function (value) {
+  if (/^\d+(\.\d{1,2})?$/.test(value)) return true
+  return false
+}
+
+const isValidNum = function (value) {
+   if (!/^[0-9]+$/.test(value)) {
+      return false
+  }
+  return true
+}
+
+const isValidBoolean = (value) => {
+  return (value === 'true' || value === 'false')
+}
+
+const isValidSize = (Arr) => {
+  let newArr = []
+  if (Arr.length === 0){return false};
+  let brr = Arr[0].split(',')
+  for (let i = 0; i < brr.length; i++) {       
+      if (!["S", "XS", "M", "X", "L", "XXL", "XL"].includes(brr[i].toUpperCase())) {return false;}
+      newArr.push(brr[i].toUpperCase())
+  }
+  return newArr
+}
+
 module.exports = { 
   isValidObjectId, 
   isValidRequestBody,
@@ -71,4 +103,9 @@ module.exports = {
   isValid2,
   isValid,
   hashPassword,
+  isValidSize,
+  isValidPrice,
+  isValidBoolean,
+  isValidNum,
+  isSize
  };
