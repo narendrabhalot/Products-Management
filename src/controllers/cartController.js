@@ -73,7 +73,7 @@ const deleteCart = async function (req, res) {
     (cartDoc.items = []), (cartDoc.totalPrice = 0), (cartDoc.totalItems = 0);
     let emptyCart = await cartDoc.save();
 
-    res.send(200).send({
+    res.send(204).send({
       status: false,
       message: "Success",
       data: emptyCart,
