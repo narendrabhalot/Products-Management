@@ -1,4 +1,8 @@
 const jwt = require("jsonwebtoken");
+const { isValidObjectId } = require("../validators/validator");
+const userModel = require("../models/userModel");
+
+//=========================================== authentication ===========================================================================================
 
 const authentication = async function (req, res, next) {
   try {
@@ -50,6 +54,8 @@ const authentication = async function (req, res, next) {
   }
 };
 
+//=========================================== authorisation ============================================================================================
+
 const authorisation = async function (req, res, next) {
   try {
     let userId = req.params.userId;
@@ -87,5 +93,7 @@ const authorisation = async function (req, res, next) {
     });
   }
 };
+
+//======================================================================================================================================================
 
 module.exports = { authentication, authorisation };
