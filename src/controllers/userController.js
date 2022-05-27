@@ -449,7 +449,7 @@ const updateUser = async function (req, res) {
     if (!isValidObjectId(userId)) {
       res
         .status(400)
-        .send({ status: false, message: `${userId} is not a valid author id` });
+        .send({ status: false, message: `${userId} is not a valid userId` });
       return;
     }
 
@@ -458,7 +458,7 @@ const updateUser = async function (req, res) {
       res.status(400).send({
         status: false,
         message:
-          "Invalid request parameters. Please provide updating keys  details",
+          "Invalid request parameters. Please provide updating keys details",
       });
       return;
     }

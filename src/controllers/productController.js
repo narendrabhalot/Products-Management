@@ -20,6 +20,7 @@ const createProduct = async function (req, res) {
   try {
     //const data = req.body
     const data = JSON.parse(JSON.stringify(req.body));
+
     // first Check request body is coming or not
     if (!isValidRequestBody(data)) {
       res.status(400).send({
