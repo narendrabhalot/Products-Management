@@ -449,7 +449,7 @@ const updateUser = async function (req, res) {
     if (!isValidObjectId(userId)) {
       res
         .status(400)
-        .send({ status: false, message: `${userId} is not a valid userId` });
+        .send({ status: false, message: `${userId} is not a valid author id` });
       return;
     }
 
@@ -458,14 +458,14 @@ const updateUser = async function (req, res) {
       res.status(400).send({
         status: false,
         message:
-          "Invalid request parameters. Please provide updating keys details",
+          "Invalid request parameters. Please provide updating keys  details",
       });
       return;
     }
 
     // if user does not exist
-    let isUserExist = await userModel.findById(userId);
-    if (!isUserExist) {
+    let userDoc = await userModel.findById(userId);
+    if (!userDoc) {
       return res
         .status(404)
         .send({ status: false, msg: "user does not exist" });
@@ -484,10 +484,10 @@ const updateUser = async function (req, res) {
 
     // fname check
     if (requestBody.hasOwnProperty("fname")) {
-      if (!isValid(fname) && !isValid2(fname)) {
+      if (!isValid2(fname)) {
         return res.status(400).send({
           status: false,
-          message: "fname is empty or invalid",
+          message: "fname is invalid",
         });
       }
       updateUserData.fname = fname;
@@ -495,10 +495,10 @@ const updateUser = async function (req, res) {
 
     // lname check
     if (requestBody.hasOwnProperty("lname")) {
-      if (!isValid(lname) && !isValid2(lname)) {
+      if (!isValid2(lname)) {
         return res.status(400).send({
           status: false,
-          message: "lname is empty or invalid",
+          message: "lname is invalid",
         });
       }
       updateUserData.lname = lname;
@@ -506,14 +506,14 @@ const updateUser = async function (req, res) {
 
     // email check
     if (requestBody.hasOwnProperty("email")) {
-      if (!isValid(email) && !isValidEmail(email)) {
+      if (!isValidEmail(email)) {
         return res.status(400).send({
           status: false,
-          message: "email is empty or invalid",
+          message: "email is invalid",
         });
       }
       // email duplication check
-      emailDb = await userModel.findOne({ email: email });
+      const emailDb = await userModel.findOne({ email: email });
       if (emailDb && emailDb._id.toString() !== userId)
         // 2nd part added 👆 to exclude "self(user)" email's duplication check
         return res
@@ -524,14 +524,14 @@ const updateUser = async function (req, res) {
 
     // phone check
     if (requestBody.hasOwnProperty("phone")) {
-      if (!isValid(phone) && !isValidPhone(phone)) {
+      if (!isValidPhone(phone)) {
         return res.status(400).send({
           status: false,
-          message: "phone is empty or invalid",
+          message: "phone is invalid",
         });
       }
       // phone duplication check
-      phoneDb = await userModel.findOne({ phone: phone });
+      const phoneDb = await userModel.findOne({ phone: phone });
       if (phoneDb && phoneDb._id.toString() !== userId)
         // 2nd part added 👆 to exclude "self(user)" phone's duplication check
         return res
@@ -542,61 +542,52 @@ const updateUser = async function (req, res) {
 
     // password check
     if (requestBody.hasOwnProperty("password")) {
-      if (!isValid(password)) {
-        return res.status(400).send({
-          status: false,
-          message: "password is empty",
-        });
-      }
       if (!isValidPassword(password)) {
         return res.status(400).send({
           status: false,
           message: "password is invalid",
         });
       }
-      updateUserData.password = password;
+      const hashPass = await hashPassword(password);
+      updateUserData.password = hashPass;
     }
 
     //📌 Updating address
-    let Doc = await userModel.findOne({ _id: userId });
-    updateUserData.address = Doc.address; // storing previous address in updateUserData
+
+    updateUserData.address = userDoc.address; // storing previous address in updateUserData
 
     // JSON.parse(undefined/emptyString) throws "Internal Server Error"
     if (isValid(address)) {
       address = JSON.parse(address); // new address (if sent through req.body) manipulated to access values using dot notation
     }
+    const validString = /\d/;
 
     // adding new shipping details
     if (address?.shipping) {
       const shipping = address.shipping; // 👈 declaration
+
       if (shipping.hasOwnProperty("street")) {
-        // if street is empty
-        if (!isValid(shipping.street)) {
+        if (!isValid2(shipping.street)) {
           return res.status(400).send({
             status: false,
-            message: "shipping address' street is empty",
+            message: "shipping address' street is invalid",
           });
         }
         updateUserData.address.shipping.street = shipping.street;
       }
+
       if (shipping.hasOwnProperty("city")) {
-        // if city is empty
-        if (!isValid(shipping.city)) {
+        // if city is invalid
+        if (!isValid2(shipping.city) || validString.test(shipping.city)) {
           return res.status(400).send({
             status: false,
-            message: "shipping address' city is empty",
+            message: "shipping address' city name is invalid",
           });
         }
         updateUserData.address.shipping.city = shipping.city;
       }
+
       if (shipping.hasOwnProperty("pincode")) {
-        // if pincode is empty
-        if (!isValid(shipping.pincode)) {
-          return res.status(400).send({
-            status: false,
-            message: "shipping address' pincode is empty",
-          });
-        }
         // if pincode is invalid
         if (!isValidPincode(shipping.pincode)) {
           return res.status(400).send({
@@ -607,37 +598,34 @@ const updateUser = async function (req, res) {
         updateUserData.address.shipping.pincode = shipping.pincode;
       }
     }
+
     // adding new billing details
     if (address?.billing) {
       const billing = address.billing; // 👈 declaration
+
       if (billing.hasOwnProperty("street")) {
-        // if street is empty
-        if (!isValid(billing.street)) {
+        // if street is invalid
+        if (!isValid2(billing.street)) {
           return res.status(400).send({
             status: false,
-            message: "billing address' street is empty",
+            message: "billing address' street is invalid",
           });
         }
         updateUserData.address.billing.street = billing.street;
       }
+
       if (billing.hasOwnProperty("city")) {
-        // if city is empty
-        if (!isValid(billing.city)) {
+        // if city is invalid
+        if (!isValid2(billing.city) || validString.test(billing.city)) {
           return res.status(400).send({
             status: false,
-            message: "billing address' city is empty",
+            message: "billing address' city is invalid",
           });
         }
         updateUserData.address.billing.city = billing.city;
       }
+
       if (billing.hasOwnProperty("pincode")) {
-        // if pincode is empty
-        if (!isValid(billing.pincode)) {
-          return res.status(400).send({
-            status: false,
-            message: "billing address' pincode is empty",
-          });
-        }
         // if pincode is invalid
         if (!isValidPincode(billing.pincode)) {
           return res.status(400).send({
