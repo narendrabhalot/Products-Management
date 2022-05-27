@@ -341,175 +341,139 @@ const getProductById = async function (req, res) {
 
 //=========================================== Update Product ===========================================================================================
 
+
 const updateProduct = async function (req, res) {
-  try {
-    let productId = req.params.productId;
-
-    // if productId is not a valid ObjectId
-    if (!isValidObjectId(productId)) {
-      return res.status(400).send({
-        status: false,
-        message: "productId is not a valid ObjectId",
-      });
-    }
-
-    productDoc = await productModel.findById(productId);
-
-    // if productId does not exist
-    if (!productDoc) {
-      return res.status(404).send({
-        status: false,
-        message: "product does not exist with this productId",
-      });
-    }
-
-    // if productDoc has field isDeleted: true
-    if (!productDoc) {
-      return res.status(404).send({
-        status: false,
-        message: "product does not exist with this productId",
-      });
-    }
-
-    // data to be updated
-    let data = { ...req.body }; // req.body does not have a prototype; creating a new object (prototype object associates by default)
-
-    // if no data to be updated
-    if (!isValidRequestBody(data)) {
-      return res.status(400).send({
-        status: false,
-        message: "No data to be updated!",
-      });
-    }
-
-    let {
-      title,
-      description,
-      price,
-      isFreeShipping,
-      style,
-      availableSizes,
-      installments,
-    } = data;
-    const updateProductData = {};
-
-    // if updating "title"
-    if (data.hasOwnProperty("title")) {
-      if (!isValid(title)) {
-        return res.status(400).send({
-          status: false,
-          message: "title is empty",
-        });
+    try {
+      let productId = req.params.productId;
+  
+      // if productId is not a valid ObjectId
+      if (!isValidObjectId(productId)) { 
+          return res.status(400).send({ status: false, message: "productId is not a valid ObjectId"});
       }
-      updateProductData.title = data.title;
-    }
-
-    // if updating "description"
-    if (data.hasOwnProperty("description")) {
-      if (!isValid(description)) {
-        return res.status(400).send({
-          status: false,
-          message: "description is empty",
-        });
+  
+      let productDoc = await productModel.findById(productId);
+  
+      // if productId does not exist
+      if (!productDoc || productDoc.isDeleted == true) {
+        return res.status(404).send({ status: false,  message: "product does not exist with this productId"});
       }
-      updateProductData.description = data.description;
-    }
-
-    // if updating "price"
-    if (data.hasOwnProperty("price")) {
-      if (!isValid(description)) {
-        return res.status(400).send({
-          status: false,
-          message: "price is empty",
-        });
+  
+      // data to be updated
+      let data = { ...req.body }; // req.body does not have a prototype; creating a new object (prototype object associates by default)
+  
+      // if no data to be updated
+      if (!isValidRequestBody(data)) { 
+          return res.status(400).send({ status: false, message: "No data to be updated!" });
       }
-      updateProductData.price = data.price;
-    }
-
-    // if updating "isFreeShipping"
-    if (data.hasOwnProperty("isFreeShipping")) {
-      if (!isValidBoolean(isFreeShipping)) {
-        return res.status(400).send({
-          status: false,
-          message: "isFreeShipping has invalid value",
-        });
+  
+      let {
+        title,
+        description,
+        price,
+        isFreeShipping,
+        style,
+        availableSizes,
+        installments,
+      } = data;
+      const updateProductData = {};
+  
+      // if updating "title"
+      if (data.hasOwnProperty("title")) {
+        if (!isValid2(title)) {
+          return res.status(400).send({ status: false, message: "title is invalid" });
+        }
+        updateProductData.title = data.title;
       }
-      updateProductData.isFreeShipping = data.isFreeShipping;
-    }
-
-    let files = req.files;
-
-    // if updating productImage
-    if (files.length) {
-      if (!isValidImage(files[0].originalname)) {
-        return res
-          .status(400)
-          .send({ status: false, message: "File extension not supported!" });
+      
+     
+      // Check Duplicate title is present or not
+      let duplicateTitle = await productModel.findOne({ title: title, isDeleted: false })
+      if (duplicateTitle) {
+         return res.status(400).send({ status: false, message: `Product Already Exists with this title` })
       }
-      let uploadedFileURL = await uploadFile(files[0]);
-      updateProductData.productImage = uploadedFileURL;
-    }
-
-    // if updating "style"
-    if (data.hasOwnProperty("style")) {
-      if (!isValid(style)) {
-        return res.status(400).send({
-          status: false,
-          message: "style is empty",
-        });
+  
+      // if updating "description"
+      if (data.hasOwnProperty("description")) {
+        if (!isValid2(description)) {
+          return res.status(400).send({ status: false, message: "description is invalid" });
+        }
+        updateProductData.description = data.description;
       }
-      updateProductData.style = data.style;
-    }
-
-    // if updating "availableSizes"
-    if (data.hasOwnProperty("availableSizes")) {
-      if (!isValidSize(availableSizes)) {
-        return res.status(400).send({
-          status: false,
-          message: "invalid availableSizes",
-        });
+  
+      // if updating "price"
+      if (data.hasOwnProperty("price")) {
+        if (!isValidPrice(price)) { 
+            return res.status(400).send({ status: false, message: "price is invlid" });
+        }
+        updateProductData.price = price;
       }
-      updateProductData.availableSizes = data.availableSizes;
-    }
-
-    // if updating "installments"
-    if (data.hasOwnProperty("installments")) {
-      if (!isValidNum(installments)) {
-        return res
-          .status(400)
-          .send({ status: false, message: "installment(s) is invalid" });
+  
+      // if updating "isFreeShipping"
+      if (data.hasOwnProperty("isFreeShipping")) {
+        if (!isValidBoolean(isFreeShipping)) {
+          return res.status(400).send({ status: false, message: "isFreeShipping has invalid value" });
+        }
+        updateProductData.isFreeShipping = data.isFreeShipping;
       }
-      updateProductData.installments = data.installments;
+  
+      let files = req.files;
+  
+      // if updating productImage
+      if (files.length) {
+        if (!isValidImage(files[0].originalname)) {
+          return res.status(400).send({ status: false, message: "File extension not supported!" });
+        }
+        let uploadedFileURL = await uploadFile(files[0]);
+        updateProductData.productImage = uploadedFileURL;
+      }
+  
+      // if updating "style"
+      if (data.hasOwnProperty("style")) {
+        if (!isValid2(style)) {
+          return res.status(400).send({ status: false, message: "style is invalid" });
+        }
+        updateProductData.style = data.style;
+      }
+  
+      // if updating "availableSizes"
+      if (data.hasOwnProperty("availableSizes")) {
+
+        if( !Array.isArray(availableSizes)){
+            return res.status(400).send({ status: false, data: "sizes must be an Array" })
+        }
+
+        if (!isValidSize(availableSizes)) {
+          return res.status(400).send({ status: false, message: "invalid availableSizes"  });
+        }
+        updateProductData.availableSizes = isValidSize(availableSizes)
+      }
+  
+      // if updating "installments"
+      if (data.hasOwnProperty("installments")) {
+        if (!isValidNum(installments)) {
+          return res.status(400).send({ status: false, message: "installment(s) is invalid" });
+        }
+        updateProductData.installments = data.installments;
+      }
+  
+      // "isDeleted" shouldn't be updated
+      if (data.hasOwnProperty("isDeleted")) {
+        return res.status(400).send({ status: false, message: "To delete this product, hit the delete API" });
+      }
+  
+      // updating document
+      let updatedProduct = await productModel.findOneAndUpdate( 
+        { _id: productId }, 
+        updateProductData,
+        { new: true }
+      );
+  
+      res.status(200).send({ status: true, message: "Product details updated", data: updatedProduct});
+    } catch (err) {
+      res.status(500).send({ status: false, message: "Internal Server Error", error: err.message });
     }
+  };
 
-    // "isDeleted" shouldn't be updated
-    if (data.hasOwnProperty("isDeleted")) {
-      return res.status(400).send({
-        status: false,
-        message: "To delete this product, hit the delete API",
-      });
-    }
-
-    // updating document
-    let updatedProduct = await productModel.findOneAndUpdate(
-      { _id: productId },
-      updateProductData,
-      { new: true }
-    );
-
-    res.status(200).send({
-      status: true,
-      message: "Product details updated",
-      data: updatedProduct,
-    });
-  } catch (err) {
-    res.status(500).send({
-      status: false,
-      message: "Internal Server Error",
-      error: err.message,
-    });
-  }
-};
 
 //=========================================== Delete Product ===========================================================================================
 
