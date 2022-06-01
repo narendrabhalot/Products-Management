@@ -24,7 +24,7 @@ const createOrder = async (req, res) => {
         }
 
         
-        //  Authorization
+        // Authorization
         if(req.userId !== userId) {
             return res.status(403).send({ status: false,
                 message: `Authorisation failed; You are logged in as ${req.userId}, not as ${userId}`
@@ -43,22 +43,26 @@ const createOrder = async (req, res) => {
             return res.status(400).send({ status: false, message: `Invalid Input Parameters` })
         }
         
-        let { cartId, ...remaining} = data
+        let { cartId, cancellable, ...remaining} = data
 
         if(isValidRequestBody(remaining)){
             return res.status(400).send({status: false, message: 'only cart ID is needed...'})
         }
 
+        if(cancellable && (typeof cancellable !== 'boolean' || cancellable != 'true' || cancellable != 'false')){
+            return res.status(400).send({status: false, message: 'please provide valid boolean value'})
+        }
+
         const cart = await cartModel.findOne({_id: cartId, userId: userId}).select({items: 1 , totalPrice: 1, totalItems: 1})
 
         if(! cart || cart.items.length == 0 ){
-            return res.status(404).send({ status: false, message: 'Cart does not exist or may be already deleted' });
+            return res.status(404).send({ status: false, message: 'Cart does not exist or may be already Empty' });
         }
 
         const items = cart.items
         const totalPrice = cart.totalPrice
         const totalItems = cart.totalItems
-        const totalQuantity = null
+        let totalQuantity = null
 
 
         if(!Array.isArray(items) || items.length == 0) {
@@ -106,7 +110,9 @@ const createOrder = async (req, res) => {
             totalPrice,
             totalItems,
             totalQuantity,
+            cancellable : cancellable
         }
+       
 
         const newOrder = await orderModel.create(orderObj)
 
@@ -114,7 +120,7 @@ const createOrder = async (req, res) => {
             { $set : { items : [] , totalPrice : 0 , totalItems : 0} }, {new : true} 
         )
 
-        return res.status(201).send({status: true, message: 'Order placed Successfully' , data: newOrder})
+        return res.status(200).send({status: true, message: 'Order placed Successfully' , data: newOrder})
 
         
     } catch (err) {
@@ -141,7 +147,7 @@ const updateOrder = async (req, res) => {
             return res.status(404).send({ status: false, message: 'User does not exist in DB' }); 
         }
 
-        //  Authorization
+         Authorization
         if(req.userId !== userId) {
             return res.status(403).send({ status: false,
                 message: `Authorisation failed; You are logged in as ${req.userId}, not as ${userId}`
@@ -175,7 +181,7 @@ const updateOrder = async (req, res) => {
             return res.status(400).send({status: false, message:`Order not found for this user`})
         }
 
-        if(isOrderExist.userId !== userId) {
+        if(isOrderExist.userId.toString() !== userId) {
             return res.status(400).send({status: false, message:`Order does not belong to user`})
         }
 
@@ -185,14 +191,14 @@ const updateOrder = async (req, res) => {
         }
 
         if(status && !["completed", "cancelled"].includes(status)) {
-            return res.status(400).send({status: false, message: `Status can be changed from pending to "cancelled" or "completed" only`})
+            return res.status(400).send({status: false, message: `Status can be changed from pending to cancelled or completed only`})
         }
 
         if(isOrderExist.status == 'completed' || isOrderExist.status == 'cancelled') {
-            return res.status(400).send({status: false, message: `Th order has been ${isValidOrder.status} already`})
+            return res.status(400).send({status: false, message: `Th order has been ${isOrderExist.status} already`})
         }
 
-        if(isOrderExist.cancellable == false || status == 'cancelled') {
+        if(isOrderExist.cancellable == false && status == 'cancelled') {
             return res.status(400).send({status: false, message: `Order can not be cancelled`})
         }
         
