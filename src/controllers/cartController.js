@@ -1,6 +1,5 @@
 const cartModel = require("../models/cartModel");
 const productModel = require("../models/productModel");
-const userModel = require("../models/userModel");
 const {
   isValidObjectId,
   isValidRequestBody,
@@ -12,28 +11,6 @@ const {
 const addToCart = async (req, res) => {
   try {
     const userId = req.params.userId;
-
-    if (!isValidObjectId(userId)) {
-      return res
-        .status(400)
-        .send({ status: false, message: "Please enter valid user ID" });
-    }
-
-    const userDoc = await userModel.findById(userId);
-
-    if (userDoc === null) {
-      return res
-        .status(404)
-        .send({ status: false, message: "User does not exist in DB" });
-    }
-
-    if (req.userId !== userId) {
-      return res.status(403).send({
-        status: false,
-        message: `Authorisation failed; You are logged in as ${req.userId}, not as ${userId}`,
-      });
-    }
-
     const data = req.body;
 
     if (!isValidRequestBody(data)) {
@@ -161,28 +138,6 @@ const addToCart = async (req, res) => {
 const updateCart = async (req, res) => {
   try {
     const userId = req.params.userId;
-
-    if (!isValidObjectId(userId)) {
-      return res
-        .status(400)
-        .send({ status: false, message: "Please enter valid user ID" });
-    }
-
-    const userDoc = await userModel.findById(userId);
-
-    if (userDoc === null) {
-      return res
-        .status(404)
-        .send({ status: false, message: "User does not exist in DB" });
-    }
-
-    if (req.userId.toString() !== userId) {
-      return res.status(403).send({
-        status: false,
-        message: `Authorisation failed; You are logged in as ${req.userId}, not as ${userId}`,
-      });
-    }
-
     const data = { ...req.body };
 
     if (!isValidRequestBody(data)) {
