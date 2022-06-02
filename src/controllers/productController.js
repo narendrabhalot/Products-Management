@@ -151,7 +151,14 @@ const createProduct = async function (req, res) {
         .send({ status: false, message: "Style type is not correct" });
       return;
     }
-
+    
+    if(!availableSizes || !data.hasOwnProperty('availableSizes')) {
+         res
+           .status(400)
+           .send({status: false , message: `Please Provide at least One Available Size ---> ${"S"}, ${"XS"}, ${"M"}, ${"X"}, ${"L"}, ${"XXL"}, ${"XL"} `})
+         return
+        }
+    
     if (availableSizes && !Array.isArray(availableSizes)) {
       return res
         .status(400)
