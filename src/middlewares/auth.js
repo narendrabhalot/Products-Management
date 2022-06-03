@@ -26,7 +26,7 @@ const authentication = async function (req, res, next) {
       function (error, decodedToken) {
         // if token is invalid
         if (error) {
-          return res.status(400).send({
+          return res.status(401).send({
             status: false,
             message: "Token is invalid",
           });
@@ -78,7 +78,7 @@ const authorisation = async function (req, res, next) {
 
     //📌 AUTHORISATION:
     if (req.userId !== userId) {
-      return res.status(401).send({
+      return res.status(403).send({
         status: false,
         message: `Authorisation failed; You are logged in as ${req.userId}, not as ${userId}`,
       });
