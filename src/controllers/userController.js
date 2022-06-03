@@ -445,14 +445,6 @@ const updateUser = async function (req, res) {
     let requestBody = { ...req.body }; // req.body does not have a prototype; creating a new object (prototype object associates by default)
     let files = req.files;
 
-    // if userId is not a valid ObjectId
-    if (!isValidObjectId(userId)) {
-      res
-        .status(400)
-        .send({ status: false, message: `${userId} is not a valid author id` });
-      return;
-    }
-
     // if req.body is empty
     if (!isValidRequestBody(requestBody)) {
       res.status(400).send({
@@ -461,22 +453,6 @@ const updateUser = async function (req, res) {
           "Invalid request parameters. Please provide updating keys  details",
       });
       return;
-    }
-
-    // if user does not exist
-    let userDoc = await userModel.findById(userId);
-    if (!userDoc) {
-      return res
-        .status(404)
-        .send({ status: false, msg: "user does not exist" });
-    }
-
-    //📌 AUTHORISATION:
-    if (req.userId !== userId) {
-      return res.status(400).send({
-        status: false,
-        message: `Authorisation failed; You are logged in as ${req.userId}, not as ${userId}`,
-      });
     }
 
     let { fname, lname, email, phone, password, address } = requestBody;
