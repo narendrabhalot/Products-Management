@@ -87,12 +87,12 @@ const addToCart = async (req, res) => {
         .send({ status: true, message: "Cart details", data: newCart });
     }
 
-    // if (!data.hasOwnProperty("cartId")) {
-    //   return res.status(400).send({
-    //     status: false,
-    //     message: `The Cart Is Aleady Present for ${userId} userId; Please Enter corresponding cartId`,
-    //   });
-    // }
+    if (!data.hasOwnProperty("cartId")) {
+      return res.status(400).send({
+        status: false,
+        message: `The Cart Is Aleady Present for ${userId} userId; Please Enter corresponding cartId`,
+      });
+    }
 
     if (cartId && cartDoc._id.toString() !== cartId) {
       return res
