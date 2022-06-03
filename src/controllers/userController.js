@@ -446,11 +446,11 @@ const updateUser = async function (req, res) {
     let files = req.files;
 
     // if req.body is empty
-    if (!isValidRequestBody(requestBody)) {
+    if (!isValidRequestBody(requestBody) && !files?.length) {
       res.status(400).send({
         status: false,
         message:
-          "Invalid request parameters. Please provide updating keys  details",
+          "Invalid request parameters. Please provide updating keys details",
       });
       return;
     }
@@ -529,7 +529,7 @@ const updateUser = async function (req, res) {
     }
 
     //📌 Updating address
-
+    let userDoc = await userModel.findById(userId);
     updateUserData.address = userDoc.address; // storing previous address in updateUserData
 
     // JSON.parse(undefined/emptyString) throws "Internal Server Error"
