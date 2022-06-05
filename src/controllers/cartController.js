@@ -253,7 +253,7 @@ const updateCart = async (req, res) => {
           $pull: { items: { productId: productId } },
           $inc: {
             totalPrice: -productPrice,
-            totalItems: -itemList[pIndex].quantity,
+            totalItems: -1,
           },
         },
         { new: true }
