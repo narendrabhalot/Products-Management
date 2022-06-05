@@ -382,7 +382,7 @@ const loginUser = async (req, res) => {
     );
 
     // send response to  user that Author is successfully logged in
-    res.status(200).send({
+    res.status(201).send({
       status: true,
       message: "User login successfull",
       data: { userId: user._id, token: token },
@@ -409,7 +409,7 @@ const getProfile = async function (req, res) {
     // if user does not exist
     let userDoc = await userModel.findById(userId);
     if (!userDoc) {
-      return res.status(400).send({
+      return res.status(404).send({
         status: false,
         message: "user does not exist",
       });
@@ -417,7 +417,7 @@ const getProfile = async function (req, res) {
 
     //📌 AUTHORISATION:
     if (req.userId !== userId) {
-      return res.status(400).send({
+      return res.status(403).send({
         status: false,
         message: `Authorisation failed; You are logged in as ${req.userId}, not as ${userId}`,
       });

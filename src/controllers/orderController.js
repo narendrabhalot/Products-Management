@@ -120,7 +120,7 @@ const createOrder = async (req, res) => {
             { $set : { items : [] , totalPrice : 0 , totalItems : 0} }, {new : true} 
         )
 
-        return res.status(200).send({status: true, message: 'Order placed Successfully' , data: newOrder})
+        return res.status(201).send({status: true, message: 'Order placed Successfully' , data: newOrder})
 
         
     } catch (err) {
